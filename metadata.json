@@ -1,0 +1,5 @@
+{
+  "name": "HomeX Intelligence Hub",
+  "description": "A sophisticated smart home management dashboard with real-time controls, energy monitoring, and automation scheduling.",
+  "requestFramePermissions": ["microphone"]
+}

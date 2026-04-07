@@ -1,0 +1,91 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile and linked units",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "linkedUnits": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "IDs of units linked to this user"
+        }
+      },
+      "required": ["uid", "email"]
+    },
+    "Unit": {
+      "title": "Unit",
+      "description": "A smart home unit (e.g., a specific device or hub)",
+      "type": "object",
+      "properties": {
+        "companyName": { "type": "string" },
+        "unitCode": { "type": "string" },
+        "type": { "type": "string" },
+        "ownerUid": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "inactive", "pending"] }
+      },
+      "required": ["companyName", "unitCode"]
+    },
+    "HeatingRouter": {
+      "title": "Heating Router",
+      "description": "Router for a heating system",
+      "type": "object",
+      "properties": {
+        "unitId": { "type": "string" },
+        "routerId": { "type": "string" },
+        "status": { "type": "string" },
+        "lastPing": { "type": "string", "format": "date-time" }
+      },
+      "required": ["unitId", "routerId"]
+    },
+    "BluetoothActivity": {
+      "title": "Bluetooth Activity",
+      "description": "Bluetooth pairing and activity logs",
+      "type": "object",
+      "properties": {
+        "unitId": { "type": "string" },
+        "activityCode": { "type": "string" },
+        "deviceName": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["unitId", "activityCode"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "/settings/{uid}": {
+      "schema": "object",
+      "description": "User-specific API keys and settings"
+    },
+    "/reminders/{reminderId}": {
+      "schema": "object",
+      "description": "User reminders"
+    },
+    "/shoppingList/{itemId}": {
+      "schema": "object",
+      "description": "User shopping list items"
+    },
+    "/services/{serviceId}": {
+      "schema": "object",
+      "description": "Linked third-party services"
+    },
+    "/units/{unitId}": {
+      "schema": "Unit",
+      "description": "Smart home units"
+    },
+    "/units/{unitId}/routers/{routerId}": {
+      "schema": "HeatingRouter",
+      "description": "Heating routers for a unit"
+    },
+    "/units/{unitId}/bluetooth/{activityId}": {
+      "schema": "BluetoothActivity",
+      "description": "Bluetooth activity for a unit"
+    }
+  }
+}

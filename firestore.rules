@@ -1,0 +1,92 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // 
+    // Collection: users
+    // Fields: uid, email, displayName, linkedUnits
+    //
+    // Collection: units
+    // Fields: companyName, unitCode, type, ownerUid, status
+    //
+    // Collection: units/{unitId}/routers
+    // Fields: unitId, routerId, status, lastPing
+    //
+    // Collection: units/{unitId}/bluetooth
+    // Fields: unitId, activityCode, deviceName, timestamp
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isUnitOwner(unitId) {
+      return isAuthenticated() && get(/databases/$(database)/documents/units/$(unitId)).data.ownerUid == request.auth.uid;
+    }
+
+    function isValidUser(data) {
+      return data.uid is string && data.email is string;
+    }
+
+    function isValidUnit(data) {
+      return data.companyName is string && data.unitCode is string;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /settings/{uid} {
+      allow read, write: if isOwner(uid);
+    }
+
+    match /reminders/{reminderId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.ownerUid == request.auth.uid) && request.resource.data.ownerUid == request.auth.uid;
+    }
+
+    match /shoppingList/{itemId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.ownerUid == request.auth.uid) && request.resource.data.ownerUid == request.auth.uid;
+    }
+
+    match /services/{serviceId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.ownerUid == request.auth.uid) && request.resource.data.ownerUid == request.auth.uid;
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid);
+      allow create: if isOwner(uid) && isValidUser(request.resource.data);
+      allow update: if isOwner(uid) && isValidUser(request.resource.data);
+    }
+
+    match /units/{unitId} {
+      // Users can read units they own
+      allow read: if isAuthenticated() && (resource == null || resource.data.ownerUid == request.auth.uid);
+      
+      // Users can create a unit if they set themselves as owner
+      allow create: if isAuthenticated() && isValidUnit(request.resource.data) && request.resource.data.ownerUid == request.auth.uid;
+      
+      // Only owner can update
+      allow update: if isUnitOwner(unitId) && isValidUnit(request.resource.data);
+
+      match /routers/{routerId} {
+        allow read, write: if isUnitOwner(unitId);
+      }
+
+      match /bluetooth/{activityId} {
+        allow read, write: if isUnitOwner(unitId);
+      }
+    }
+  }
+}
